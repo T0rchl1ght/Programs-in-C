@@ -1,0 +1,77 @@
+#include <cs50.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+string plaintext(int key_int);
+
+bool only_digits(string s);
+
+int main(int argc, string argv[])
+{
+    // Accepts single CLA.
+    if (argc != 2)
+    {
+        printf("Usage: ./caesar key\n");
+
+        // Use Printf for error value of 1
+        return 1;
+    }
+
+    // Get key from user
+    string key = argv[1];
+
+    if (!only_digits(key))
+    {
+        return 1;
+    }
+
+    // Key input is a string, convert to number with atoi in stdlib.h
+    int key_int = atoi(key);
+    string ciphertext = plaintext(key_int);
+
+    // Return enciphered text
+    printf("Ciphertext: %s\n", ciphertext);
+
+    return 0;
+}
+
+// Confirm key is a number
+bool only_digits(string s)
+{
+    for (int i = 0, n = strlen(s); i < n; i++)
+    {
+        if (!isdigit(s[i]))
+        {
+            printf("Usage: ./caesar key\n");
+            return false;
+        }
+    }
+    return true;
+}
+
+// Move letter value by the amount given in key
+// Convert back to ASCII
+string plaintext(int key_int)
+{
+    // Get text from user with get_string
+    string plain = get_string("plaintext: ");
+    // Use strlen to check char count
+    for (int i = 0, n = strlen(plain); i < n; i++)
+    {
+
+        // Preserve upper/lower case with isupper and islower
+        if (islower(plain[i]))
+        {
+
+            // Move letter value by the amount given in key
+            plain[i] = (plain[i] - 'a' + key_int) % 26 + 'a';
+        }
+        else if (isupper(plain[i]))
+        {
+            plain[i] = (plain[i] - 'A' + key_int) % 26 + 'A';
+        }
+    }
+    return plain;
+}
