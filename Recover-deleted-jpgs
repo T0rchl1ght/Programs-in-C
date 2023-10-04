@@ -1,0 +1,88 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+// Need to define block_size from notes
+#define BLOCK_SIZE 512
+
+int main(int argc, char *argv[])
+{
+    // Confirm correct usage
+    if (argc != 2)
+    {
+        printf("Usage: ./recover IMAGE\n");
+        return 1;
+    }
+
+    // If the forensic image cannot be opened for reading, inform user
+    char *file = argv[1];
+    FILE *rawFile = fopen(file, "r");
+    if (rawFile == NULL)
+    {
+        // Print error message if the file can't be opened, return 1
+        printf("Can't open %s.\n", file);
+        return 1;
+    }
+
+    // keep track of jpgs recovered
+    bool recoverFile = false;
+
+    // keep count of files found
+    int numFile = 0;
+
+    // set buffer size, notes say to use uint8_t
+    uint8_t buffer[BLOCK_SIZE];
+
+    // build an array with name provided in course work. Notes say it should be 8
+    char nameFile[8];
+
+    // point to current file being worked on
+    FILE *outFile = NULL;
+
+    // from notes but I changed the raw_file name, may need to change back.
+    while (fread(buffer, BLOCK_SIZE, 1, rawFile) == 1)
+    {
+        // Read the first few bytes of a file to check if it's a jpg
+        // buffer array from video and notes
+        if (buffer[0] == 0xff && buffer[1] == 0xd8 && buffer[2] == 0xff && (buffer[3] & 0xf0) == 0xe0)
+        {
+            if (recoverFile)
+            {
+                fclose(outFile);
+            }
+            else
+            {
+                recoverFile = true;
+            }
+            // from notes, print name.
+            sprintf(nameFile, "%03i.jpg", numFile);
+
+            // Make a new file to write to
+            outFile = fopen(nameFile, "w");
+            if (outFile == NULL)
+            {
+                // close the file
+                fclose(rawFile);
+                printf("Couldn't create %s.\n", nameFile);
+                return 1;
+            }
+            // update file count
+            numFile++;
+        }
+        // write the current block to open jpg
+        if (recoverFile)
+        {
+            // need to write to file
+            fwrite(buffer, BLOCK_SIZE, 1, outFile);
+        }
+    }
+    // close out the file
+    fclose(rawFile);
+    if (recoverFile)
+    {
+        fclose(outFile);
+    }
+    // close program
+    return 0;
+}
